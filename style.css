@@ -454,6 +454,92 @@ h1, h2, h3, h4 {
     color: #94A3B8;
 }
 
+/* Hero Badge */
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1.5rem;
+    padding: 8px 16px;
+    background-color: rgba(0, 86, 210, 0.08);
+    border: 1px solid rgba(0, 86, 210, 0.2);
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+    animation: pulse-border 3s infinite;
+}
+
+.hero-badge .badge-icon {
+    font-size: 1rem;
+}
+
+@keyframes pulse-border {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 86, 210, 0.2);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(0, 86, 210, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 86, 210, 0);
+    }
+}
+
+/* Footer Disclaimer styling */
+.disclaimer-container {
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+}
+
+.disclaimer-box {
+    background-color: #1E293B; /* Slightly lighter than footer dark text */
+    border-left: 4px solid #EAB308; /* Yellow warning border */
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.disclaimer-box:hover {
+    box-shadow: var(--shadow-md);
+    border-left-color: #F59E0B; /* Highlight warning border on hover */
+    transform: translateY(-2px);
+}
+
+.disclaimer-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+
+.disclaimer-header h4 {
+    color: #F8FAFC; /* Very light text */
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.disclaimer-icon {
+    font-size: 1.3rem;
+}
+
+.disclaimer-text {
+    color: #94A3B8; /* Muted text */
+    font-size: 0.85rem;
+    line-height: 1.7;
+    margin-bottom: 0.85rem;
+}
+
+.disclaimer-text:last-child {
+    margin-bottom: 0;
+}
+
+.disclaimer-text strong {
+    color: #F1F5F9; /* Highlight key terms */
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .nav-links {
@@ -492,5 +578,9 @@ h1, h2, h3, h4 {
 
     .hero-image {
         display: none; /* Hide graphic on mobile for simplicity */
+    }
+
+    .disclaimer-box {
+        padding: 1.25rem;
     }
 }
