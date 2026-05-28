@@ -392,14 +392,417 @@ const bindCalcInputs = () => {
     });
 };
 
-// Initialize Calculator on load
-const initCalculator = () => {
+// Initialize Website features on load
+const initAllFeatures = () => {
     bindCalcInputs();
     triggerCalculation();
+    initPricingSwitcher();
+    initPerformanceDashboard();
 };
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initCalculator);
+    document.addEventListener('DOMContentLoaded', initAllFeatures);
 } else {
-    initCalculator();
+    initAllFeatures();
 }
+
+// ==========================================
+// Premium Product Pricing Switcher Logic
+// ==========================================
+function initPricingSwitcher() {
+    const switcherButtons = document.querySelectorAll('.switcher-btn');
+    const oldValEl = document.getElementById('p-old-val');
+    const newValEl = document.getElementById('p-new-val');
+    const durLabelEl = document.getElementById('p-dur-label');
+    const discValEl = document.getElementById('p-disc-val');
+
+    if (!switcherButtons.length) return;
+
+    switcherButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active from all
+            switcherButtons.forEach(b => b.classList.remove('active'));
+            // Add active to current
+            btn.classList.add('active');
+
+            // Read data attributes
+            const price = btn.getAttribute('data-price');
+            const origPrice = btn.getAttribute('data-orig');
+            const discount = btn.getAttribute('data-discount');
+            const duration = btn.getAttribute('data-duration');
+
+            // Update UI elements with smooth transitions
+            if (oldValEl) oldValEl.innerText = `₹${origPrice}`;
+            if (newValEl) newValEl.innerText = `₹${price}`;
+            if (durLabelEl) durLabelEl.innerText = `/ ${duration}`;
+            if (discValEl) discValEl.innerText = discount;
+        });
+    });
+}
+
+// ==========================================
+// Performance Analytics Dashboard Logic
+// ==========================================
+let tradesData = [];
+let filteredTrades = [];
+let currentLogPage = 1;
+const logsPerPage = 10;
+let equityChartInstance = null;
+
+function initPerformanceDashboard() {
+    // 1. Dashboard Tab Switches
+    const perfTabBtns = document.querySelectorAll('[data-perf-tab]');
+    const perfPanels = document.querySelectorAll('.perf-panel');
+
+    perfTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-perf-tab');
+
+            // Toggle active tab button class
+            perfTabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Toggle active panel visibility
+            perfPanels.forEach(panel => {
+                if (panel.id === `perf-${targetTab}-panel`) {
+                    panel.style.display = 'block';
+                } else {
+                    panel.style.display = 'none';
+                }
+            });
+
+            // If switching to chart, trigger resize to ensure proper scaling
+            if (targetTab === 'chart' && equityChartInstance) {
+                equityChartInstance.resize();
+            }
+        });
+    });
+
+    // 2. Render Monthly Summary Table
+    renderMonthlySummaryTable();
+
+    // 3. Trade Logs Integration (Search, Filter, Pagination)
+    tradesData = BACKTEST_DATA['All Trades'] || [];
+    filteredTrades = [...tradesData];
+
+    const searchInput = document.getElementById('log-search');
+    const instrumentSelect = document.getElementById('log-filter-instrument');
+    const resultSelect = document.getElementById('log-filter-result');
+    const clearFiltersBtn = document.getElementById('clear-log-filters');
+
+    if (searchInput) searchInput.addEventListener('input', handleFilterChange);
+    if (instrumentSelect) instrumentSelect.addEventListener('change', handleFilterChange);
+    if (resultSelect) resultSelect.addEventListener('change', handleFilterChange);
+    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            if (searchInput) searchInput.value = '';
+            if (instrumentSelect) instrumentSelect.value = 'ALL';
+            if (resultSelect) resultSelect.value = 'ALL';
+            handleFilterChange();
+        });
+    }
+
+    // Trigger initial logs render
+    handleFilterChange();
+
+    // 4. Create Cumulative Net Profit Chart
+    createEquityCurveChart();
+}
+
+// Format currency locally matching existing structure
+function fmtLocalRupees(amt) {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 2
+    }).format(amt);
+}
+
+// Render Month-on-Month Summary Table
+function renderMonthlySummaryTable() {
+    const tbody = document.getElementById('monthly-summary-table-body');
+    if (!tbody) return;
+
+    const data = BACKTEST_DATA['Monthly Summary'] || [];
+    tbody.innerHTML = '';
+
+    data.forEach(row => {
+        const netPL = parseFloat(row.Net_Profit_Loss || 0);
+        const points = parseFloat(row.Points || 0);
+        const winRate = parseFloat(row['Win Rate %'] || 0);
+        const plClass = netPL >= 0 ? 'style="color: #10B981; font-weight: 700;"' : 'style="color: #B91C1C; font-weight: 700;"';
+        
+        tbody.innerHTML += `
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 12px 16px; font-weight: 600;">${row.Instrument}</td>
+                <td style="padding: 12px 16px;">${row.Month}</td>
+                <td style="padding: 12px 16px; text-align: center;">${row.Trades}</td>
+                <td style="padding: 12px 16px; text-align: center;">${row.Wins}</td>
+                <td style="padding: 12px 16px; text-align: center;">${row.Losses}</td>
+                <td style="padding: 12px 16px; text-align: right; font-weight: 600; font-family: monospace;">${points >= 0 ? '+' : ''}${points.toFixed(2)}</td>
+                <td style="padding: 12px 16px; text-align: right; font-family: monospace;" ${plClass}>${netPL >= 0 ? '+' : ''}${fmtLocalRupees(netPL)}</td>
+                <td style="padding: 12px 16px; text-align: center;">
+                    <span class="badge-${winRate >= 50 ? 'win' : 'loss'}">${winRate.toFixed(1)}%</span>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// Filters Handler
+function handleFilterChange() {
+    const searchVal = document.getElementById('log-search') ? document.getElementById('log-search').value.toLowerCase().trim() : '';
+    const instrumentVal = document.getElementById('log-filter-instrument') ? document.getElementById('log-filter-instrument').value : 'ALL';
+    const resultVal = document.getElementById('log-filter-result') ? document.getElementById('log-filter-result').value : 'ALL';
+
+    filteredTrades = tradesData.filter(trade => {
+        // Search filter: Date, Side, Result or Exit Reason
+        const dateMatch = String(trade.Date || '').toLowerCase().includes(searchVal);
+        const sideMatch = String(trade.Side || '').toLowerCase().includes(searchVal);
+        const reasonMatch = String(trade.Exit_Reason || trade['Exit Reason'] || '').toLowerCase().includes(searchVal);
+        const matchesSearch = !searchVal || dateMatch || sideMatch || reasonMatch;
+
+        // Instrument filter
+        const matchesInstrument = instrumentVal === 'ALL' || trade.Instrument === instrumentVal;
+
+        // Result filter
+        const matchesResult = resultVal === 'ALL' || String(trade.Result || '').toUpperCase() === resultVal;
+
+        return matchesSearch && matchesInstrument && matchesResult;
+    });
+
+    currentLogPage = 1;
+    renderTradeLogsTable();
+}
+
+// Render Trade Logs Table with Pagination
+function renderTradeLogsTable() {
+    const tbody = document.getElementById('trade-logs-table-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    const start = (currentLogPage - 1) * logsPerPage;
+    const end = Math.min(start + logsPerPage, filteredTrades.length);
+    const pageData = filteredTrades.slice(start, end);
+
+    if (pageData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--light-text); font-weight: 500;">
+                    No verified trades matched your filter criteria.
+                </td>
+            </tr>
+        `;
+        updateLogsPagination(0);
+        return;
+    }
+
+    pageData.forEach(trade => {
+        const side = String(trade.Side || '').toUpperCase();
+        const result = String(trade.Result || '').toUpperCase();
+        const netPL = parseFloat(trade.Net_PL || trade['Net P&L'] || 0);
+        const points = parseFloat(trade.Points || 0);
+        const exitReason = trade.Exit_Reason || trade['Exit Reason'] || '-';
+        const plClass = netPL >= 0 ? 'style="color: #10B981; font-weight: 600;"' : 'style="color: #B91C1C; font-weight: 600;"';
+        
+        const sideBadge = side === 'BUY' ? '<span class="badge-buy">BUY</span>' : '<span class="badge-sell">SELL</span>';
+        const resultBadge = result === 'WIN' ? '<span class="badge-win">WIN</span>' : '<span class="badge-loss">LOSS</span>';
+
+        tbody.innerHTML += `
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 10px 14px; font-weight: 600;">${trade.Date}</td>
+                <td style="padding: 10px 14px;">${trade.Instrument}</td>
+                <td style="padding: 10px 14px; text-align: center;">${sideBadge}</td>
+                <td style="padding: 10px 14px; text-align: right; font-family: monospace;">${parseFloat(trade.Entry_Price || trade['Entry Price'] || 0).toFixed(2)}</td>
+                <td style="padding: 10px 14px; text-align: right; font-family: monospace;">${parseFloat(trade.Exit_Price || trade['Exit Price'] || 0).toFixed(2)}</td>
+                <td style="padding: 10px 14px; text-align: right; font-family: monospace; font-weight: 600;">${points >= 0 ? '+' : ''}${points.toFixed(2)}</td>
+                <td style="padding: 10px 14px; text-align: right; font-family: monospace;" ${plClass}>${netPL >= 0 ? '+' : ''}${fmtLocalRupees(netPL)}</td>
+                <td style="padding: 10px 14px; text-align: center; font-size: 0.8rem; color: var(--light-text);">${exitReason}</td>
+                <td style="padding: 10px 14px; text-align: center;">${resultBadge}</td>
+            </tr>
+        `;
+    });
+
+    updateLogsPagination(filteredTrades.length);
+}
+
+// Generate pagination controls
+function updateLogsPagination(totalItems) {
+    const infoSpan = document.getElementById('log-pagination-info');
+    const buttonsDiv = document.getElementById('log-pagination-buttons');
+    if (!infoSpan || !buttonsDiv) return;
+
+    if (totalItems === 0) {
+        infoSpan.innerText = 'Showing 0 of 0 trades';
+        buttonsDiv.innerHTML = '';
+        return;
+    }
+
+    const totalPages = Math.ceil(totalItems / logsPerPage);
+    const startItem = (currentLogPage - 1) * logsPerPage + 1;
+    const endItem = Math.min(startItem + logsPerPage - 1, totalItems);
+
+    infoSpan.innerText = `Showing ${startItem}-${endItem} of ${totalItems} trades`;
+    buttonsDiv.innerHTML = '';
+
+    // 1. Previous page button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = `pagination-btn ${currentLogPage === 1 ? 'disabled' : ''}`;
+    prevBtn.innerHTML = '‹';
+    prevBtn.disabled = currentLogPage === 1;
+    prevBtn.addEventListener('click', () => {
+        if (currentLogPage > 1) {
+            currentLogPage--;
+            renderTradeLogsTable();
+        }
+    });
+    buttonsDiv.appendChild(prevBtn);
+
+    // 2. Centered Page buttons
+    let startPage = Math.max(1, currentLogPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        if (i < 1) continue;
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `pagination-btn ${currentLogPage === i ? 'active' : ''}`;
+        pageBtn.innerText = i;
+        pageBtn.addEventListener('click', () => {
+            currentLogPage = i;
+            renderTradeLogsTable();
+        });
+        buttonsDiv.appendChild(pageBtn);
+    }
+
+    // 3. Next page button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = `pagination-btn ${currentLogPage === totalPages ? 'disabled' : ''}`;
+    nextBtn.innerHTML = '›';
+    nextBtn.disabled = currentLogPage === totalPages;
+    nextBtn.addEventListener('click', () => {
+        if (currentLogPage < totalPages) {
+            currentLogPage++;
+            renderTradeLogsTable();
+        }
+    });
+    buttonsDiv.appendChild(nextBtn);
+}
+
+// Create beautifully shaded Equity Growth Chart
+function createEquityCurveChart() {
+    const canvas = document.getElementById('equityCurveChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const dailyData = BACKTEST_DATA['Daily Total Capital'] || [];
+    
+    // Sort chronological
+    const sortedDaily = [...dailyData].sort((a, b) => new Date(a.Date) - new Date(b.Date));
+
+    const labels = [];
+    const points = [];
+    let runningSum = 0;
+
+    // Add initial zero point
+    if (sortedDaily.length > 0) {
+        const firstDate = new Date(sortedDaily[0].Date);
+        firstDate.setDate(firstDate.getDate() - 1);
+        labels.push(firstDate.toISOString().split('T')[0]);
+        points.push(0);
+    }
+
+    sortedDaily.forEach(row => {
+        runningSum += parseFloat(row.Total_Net_Profit_Loss || 0);
+        labels.push(row.Date);
+        points.push(runningSum);
+    });
+
+    const blueGradient = ctx.createLinearGradient(0, 0, 0, 300);
+    blueGradient.addColorStop(0, 'rgba(0, 86, 210, 0.25)');
+    blueGradient.addColorStop(1, 'rgba(0, 86, 210, 0.00)');
+
+    equityChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Cumulative Net Profit (1 Lot)',
+                data: points,
+                borderColor: '#0056D2',
+                borderWidth: 2.5,
+                backgroundColor: blueGradient,
+                fill: true,
+                tension: 0.25,
+                pointBackgroundColor: '#0056D2',
+                pointBorderColor: '#FFFFFF',
+                pointBorderWidth: 1,
+                pointRadius: 1,
+                pointHoverRadius: 6,
+                pointHoverBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: '#1E293B',
+                    titleColor: '#FFFFFF',
+                    bodyColor: '#E2E8F0',
+                    borderColor: '#475569',
+                    borderWidth: 1,
+                    padding: 12,
+                    boxPadding: 4,
+                    callbacks: {
+                        label: function(context) {
+                            let valStr = context.parsed.y >= 0 ? '+' : '';
+                            valStr += fmtLocalRupees(context.parsed.y);
+                            return ` Net Growth: ${valStr}`;
+                        }
+                    }
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        maxTicksLimit: 8,
+                        font: {
+                            family: "'Inter', sans-serif",
+                            size: 10
+                        },
+                        color: '#64748B'
+                    }
+                },
+                y: {
+                    grid: {
+                        color: '#F1F5F9'
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Inter', sans-serif",
+                            size: 10
+                        },
+                        color: '#64748B',
+                        callback: function(value) {
+                            return (value >= 0 ? '₹' : '-₹') + Math.abs(value);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+

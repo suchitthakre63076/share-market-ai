@@ -1015,3 +1015,277 @@ h1, h2, h3, h4 {
         font-size: 0.85rem;
     }
 }
+
+/* ==========================================================================
+   Premium Scanner Product & Backtest Performance Dashboard Styles
+   ========================================================================== */
+
+/* Pricing Switcher Inside Product Card */
+.pricing-switcher-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 0.5rem 0 1rem 0;
+}
+
+.pricing-switcher {
+    display: flex;
+    background-color: #F1F5F9;
+    padding: 4px;
+    border-radius: 30px;
+    gap: 2px;
+    width: 100%;
+}
+
+.switcher-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--light-text);
+    cursor: pointer;
+    border-radius: 25px;
+    transition: var(--transition);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.switcher-btn:hover {
+    color: var(--dark-text);
+}
+
+.switcher-btn.active {
+    background-color: var(--primary-blue);
+    color: var(--white);
+    box-shadow: 0 2px 8px rgba(0, 86, 210, 0.15);
+}
+
+/* Price Box */
+.price-display-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(232, 240, 254, 0.4) 0%, rgba(255, 255, 255, 1) 100%);
+    border: 1px solid var(--border-color);
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-top: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.price-old {
+    text-decoration: line-through;
+    color: var(--light-text);
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+}
+
+.price-new-row {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.price-new {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    line-height: 1;
+}
+
+.price-duration-label {
+    font-size: 0.88rem;
+    color: var(--light-text);
+    font-weight: 500;
+}
+
+.price-discount-tag {
+    background-color: rgba(16, 185, 129, 0.12);
+    color: #10B981;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 20px;
+    margin-top: 6px;
+    display: inline-block;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Premium Tables */
+.premium-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.premium-table th {
+    padding: 14px 16px;
+    background-color: #F8FAFC;
+    color: var(--light-text);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.premium-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--dark-text);
+    font-size: 0.88rem;
+    vertical-align: middle;
+}
+
+.premium-table tbody tr {
+    transition: var(--transition);
+}
+
+.premium-table tbody tr:hover {
+    background-color: rgba(232, 240, 254, 0.25);
+}
+
+/* Color Pills for Tables */
+.badge-win {
+    background-color: #ECFDF5;
+    color: #047857;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.72rem;
+    display: inline-block;
+    border: 1px solid rgba(4, 120, 87, 0.15);
+}
+
+.badge-loss {
+    background-color: #FEF2F2;
+    color: #B91C1C;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.72rem;
+    display: inline-block;
+    border: 1px solid rgba(185, 28, 28, 0.15);
+}
+
+.badge-buy {
+    background-color: #EFF6FF;
+    color: #1D4ED8;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.72rem;
+    display: inline-block;
+    border: 1px solid rgba(29, 78, 216, 0.15);
+}
+
+.badge-sell {
+    background-color: #FFFBEB;
+    color: #D97706;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.72rem;
+    display: inline-block;
+    border: 1px solid rgba(217, 119, 6, 0.15);
+}
+
+/* Performance tab sheets styling */
+.perf-panel {
+    display: none;
+}
+
+.perf-panel.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+/* Pagination Buttons */
+.pagination-btn {
+    border: 1px solid var(--border-color);
+    background-color: var(--white);
+    color: var(--dark-text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+}
+
+.pagination-btn:hover:not(.disabled):not(.active) {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    transform: translateY(-1px);
+}
+
+.pagination-btn.active {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: var(--white);
+    box-shadow: 0 2px 6px rgba(0, 86, 210, 0.2);
+}
+
+.pagination-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: #F1F5F9;
+}
+
+/* Log Filtering Layout Styles */
+.log-filters-container .calc-input,
+.log-filters-container .calc-select {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #F8FAFC;
+    transition: var(--transition);
+    outline: none;
+}
+
+.log-filters-container .calc-input:focus,
+.log-filters-container .calc-select:focus {
+    border-color: var(--primary-blue);
+    background-color: var(--white);
+    box-shadow: 0 0 0 3px rgba(0, 86, 210, 0.08);
+}
+
+/* Adjustments for specific layouts in products grid */
+.products-grid .premium-product {
+    border: 2px solid rgba(0, 86, 210, 0.15);
+    box-shadow: var(--shadow-md);
+}
+
+.products-grid .premium-product:hover {
+    border-color: var(--primary-blue);
+    box-shadow: var(--shadow-lg);
+}
+
+.premium-badge {
+    background-color: var(--primary-blue) !important;
+}
+
+/* Responsive Table Overrides */
+@media (max-width: 768px) {
+    .log-filters-container {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    
+    .log-filters-container > div {
+        flex-direction: column;
+        max-width: 100% !important;
+    }
+
+    .log-pagination {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
