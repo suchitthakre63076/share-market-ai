@@ -398,6 +398,7 @@ const initAllFeatures = () => {
     triggerCalculation();
     initPricingSwitcher();
     initPerformanceDashboard();
+    initGA4EventTracking();
 };
 
 if (document.readyState === 'loading') {
@@ -810,6 +811,59 @@ function createEquityCurveChart() {
                 }
             }
         }
+    });
+}
+
+// ==========================================
+// Google Analytics GA4 Event Tracking Logic
+// ==========================================
+function initGA4EventTracking() {
+    // Helper to send GA4 events safely
+    function trackEvent(action, category, label) {
+        if (typeof gtag === 'function') {
+            gtag('event', action, {
+                'event_category': category,
+                'event_label': label
+            });
+        }
+    }
+
+    // 1. Track Option Dashboard checkout button clicks
+    const optionDashboardBtn = document.querySelector('a[href*="6a1470b5655cc300130558f7"]');
+    if (optionDashboardBtn) {
+        optionDashboardBtn.addEventListener('click', () => {
+            trackEvent('click_premium_channel', 'Outbound Checkout', 'AI Nifty Option Dashboard (₹49/mo)');
+        });
+    }
+
+    // 2. Track Premium Scanner checkout button clicks
+    const premiumScannerBtn = document.querySelector('a[href*="6a17c247faae8100135e9a75"]');
+    if (premiumScannerBtn) {
+        premiumScannerBtn.addEventListener('click', () => {
+            const activeBtn = document.querySelector('.pricing-switcher .switcher-btn.active');
+            const plan = activeBtn ? activeBtn.getAttribute('data-duration') : '1 Month';
+            trackEvent('click_subscribe_premium', 'Outbound Checkout', `AI Premium Scanner (${plan})`);
+        });
+    }
+
+    // 3. Track Excel sheet downloads
+    const downloadBtn = document.querySelector('a[href="backtest_summary.xlsx"]');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            trackEvent('download_backtest_workbook', 'Downloads', 'backtest_summary.xlsx');
+        });
+    }
+
+    // 4. Track Telegram support and WhatsApp community channel clicks
+    document.querySelectorAll('a[href*="t.me"]').forEach(link => {
+        link.addEventListener('click', () => {
+            trackEvent('click_telegram_support', 'Support Links', link.href);
+        });
+    });
+    document.querySelectorAll('a[href*="whatsapp.com"]').forEach(link => {
+        link.addEventListener('click', () => {
+            trackEvent('click_whatsapp_channel', 'Outbound Links', link.href);
+        });
     });
 }
 
